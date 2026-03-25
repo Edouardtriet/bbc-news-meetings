@@ -14,6 +14,19 @@ cp .build/release/bbc-news-meetings /usr/local/bin/
 bbc-news-meetings setup
 ```
 
+## Menu bar countdown
+
+Want a live countdown in your menu bar like "Board Meeting in 2:30"? Install the menu bar app:
+
+```sh
+cp .build/release/bbc-news-meetings-menubar /usr/local/bin/
+bbc-news-meetings-menubar
+```
+
+To auto-start on login, go to **System Settings > General > Login Items** and add `/usr/local/bin/bbc-news-meetings-menubar`.
+
+The menu bar app shows a live countdown, plays the music, and has a "Stop Music" option when you click it. It replaces the LaunchAgent — no need to run both.
+
 ## How it works
 
 1. A **LaunchAgent** runs `bbc-news-meetings check` every 30 seconds
