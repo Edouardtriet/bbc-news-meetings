@@ -1,15 +1,15 @@
 import Foundation
 
-class AudioPlayer {
+public class AudioPlayer {
     private var process: Process?
 
-    func play(audioPath: String, volume: Double, maxDuration: TimeInterval? = nil) {
+    public init() {}
+
+    public func play(audioPath: String, volume: Double, maxDuration: TimeInterval? = nil) {
         let expandedPath = (audioPath as NSString).expandingTildeInPath
 
         guard FileManager.default.fileExists(atPath: expandedPath) else {
             log("Audio file not found: \(expandedPath)")
-            print("Error: Audio file not found at \(expandedPath)")
-            print("Place an audio file there or update audio_path in config.")
             return
         }
 
@@ -21,8 +21,6 @@ class AudioPlayer {
             args += ["-t", String(format: "%.0f", duration)]
         }
         process.arguments = args
-
-        // Suppress afplay output
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
 
@@ -32,19 +30,22 @@ class AudioPlayer {
             log("Playing audio: \(expandedPath) (volume: \(volume))")
         } catch {
             log("Error playing audio: \(error.localizedDescription)")
-            print("Error: Could not play audio — \(error.localizedDescription)")
         }
     }
 
-    func playAndWait(audioPath: String, volume: Double, maxDuration: TimeInterval? = nil) {
+    public func playAndWait(audioPath: String, volume: Double, maxDuration: TimeInterval? = nil) {
         play(audioPath: audioPath, volume: volume, maxDuration: maxDuration)
         process?.waitUntilExit()
     }
 
-    func stop() {
+    public func stop() {
         if let process = process, process.isRunning {
             process.terminate()
             log("Audio stopped")
         }
+    }
+
+    public var isPlaying: Bool {
+        process?.isRunning ?? false
     }
 }

@@ -1,24 +1,24 @@
 import Foundation
 
-struct AnnouncedEvent: Codable {
-    let eventId: String
-    let announcedAt: Date
+public struct AnnouncedEvent: Codable {
+    public let eventId: String
+    public let announcedAt: Date
 }
 
-struct State: Codable {
-    var announcedEvents: [AnnouncedEvent]
+public struct State: Codable {
+    public var announcedEvents: [AnnouncedEvent]
 
-    static let empty = State(announcedEvents: [])
+    public static let empty = State(announcedEvents: [])
 }
 
-class StateManager {
+public class StateManager {
     private let path: URL
 
-    init(path: URL = Config.defaultStatePath) {
+    public init(path: URL = Config.defaultStatePath) {
         self.path = path
     }
 
-    func load() -> State {
+    public func load() -> State {
         guard FileManager.default.fileExists(atPath: path.path) else {
             return .empty
         }
@@ -33,7 +33,7 @@ class StateManager {
         }
     }
 
-    func save(_ state: State) {
+    public func save(_ state: State) {
         do {
             let dir = path.deletingLastPathComponent()
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -47,16 +47,16 @@ class StateManager {
         }
     }
 
-    func hasBeenAnnounced(eventId: String, state: State) -> Bool {
+    public func hasBeenAnnounced(eventId: String, state: State) -> Bool {
         return state.announcedEvents.contains { $0.eventId == eventId }
     }
 
-    func markAnnounced(eventId: String, state: inout State) {
+    public func markAnnounced(eventId: String, state: inout State) {
         state.announcedEvents.append(AnnouncedEvent(eventId: eventId, announcedAt: Date()))
     }
 
-    func pruneOldEntries(state: inout State) {
-        let cutoff = Date().addingTimeInterval(-24 * 3600) // 24 hours ago
+    public func pruneOldEntries(state: inout State) {
+        let cutoff = Date().addingTimeInterval(-24 * 3600)
         state.announcedEvents.removeAll { $0.announcedAt < cutoff }
     }
 }

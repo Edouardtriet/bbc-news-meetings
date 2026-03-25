@@ -102,6 +102,7 @@ Edit `~/.config/bbc-news-meetings/config.json`:
 ## Requirements
 
 - macOS 14 (Sonoma) or later
+- Xcode Command Line Tools (`xcode-select --install`)
 - Calendar access permission (granted during setup)
 
 ## Troubleshooting

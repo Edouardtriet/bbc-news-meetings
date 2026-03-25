@@ -1,14 +1,14 @@
 import EventKit
 import Foundation
 
-struct UpcomingEvent {
-    let id: String
-    let title: String
-    let startDate: Date
-    let calendarName: String
-    let secondsUntilStart: TimeInterval
+public struct UpcomingEvent {
+    public let id: String
+    public let title: String
+    public let startDate: Date
+    public let calendarName: String
+    public let secondsUntilStart: TimeInterval
 
-    var formattedTimeUntil: String {
+    public var formattedTimeUntil: String {
         let seconds = Int(secondsUntilStart)
         if seconds < 0 {
             let ago = abs(seconds)
@@ -22,12 +22,21 @@ struct UpcomingEvent {
         if mins == 0 { return "in \(hours)h" }
         return "in \(hours)h \(mins)m"
     }
+
+    public var countdownString: String {
+        let seconds = Int(max(secondsUntilStart, 0))
+        let m = seconds / 60
+        let s = seconds % 60
+        return String(format: "%d:%02d", m, s)
+    }
 }
 
-class CalendarService {
+public class CalendarService {
     private let store = EKEventStore()
 
-    func requestAccess() -> Bool {
+    public init() {}
+
+    public func requestAccess() -> Bool {
         var granted = false
         var done = false
         store.requestFullAccessToEvents { result, error in
@@ -43,16 +52,15 @@ class CalendarService {
         return granted
     }
 
-    func checkAccess() -> EKAuthorizationStatus {
+    public func checkAccess() -> EKAuthorizationStatus {
         return EKEventStore.authorizationStatus(for: .event)
     }
 
-    func findUpcomingEvents(config: Config) -> [UpcomingEvent] {
+    public func findUpcomingEvents(config: Config) -> [UpcomingEvent] {
         let now = Date()
         let leadTime = TimeInterval(config.leadTimeSeconds)
         let gracePeriod = TimeInterval(config.gracePeriodSeconds)
 
-        // Look from grace period in the past to lead time in the future
         let startDate = now.addingTimeInterval(-gracePeriod)
         let endDate = now.addingTimeInterval(leadTime)
 
@@ -60,42 +68,29 @@ class CalendarService {
         let events = store.events(matching: predicate)
 
         return events.compactMap { event -> UpcomingEvent? in
-            // Skip all-day events
-            if config.skipAllDay && event.isAllDay {
-                return nil
-            }
-
-            // Skip declined events
+            if config.skipAllDay && event.isAllDay { return nil }
             if config.skipDeclined {
                 if let attendees = event.attendees {
                     let selfAttendee = attendees.first { $0.isCurrentUser }
-                    if selfAttendee?.participantStatus == .declined {
-                        return nil
-                    }
+                    if selfAttendee?.participantStatus == .declined { return nil }
                 }
             }
-
-            // Skip cancelled events
-            if event.status == .canceled {
-                return nil
-            }
-
-            let secondsUntil = event.startDate.timeIntervalSince(now)
+            if event.status == .canceled { return nil }
 
             return UpcomingEvent(
                 id: event.eventIdentifier,
                 title: event.title ?? "Untitled",
                 startDate: event.startDate,
                 calendarName: event.calendar.title,
-                secondsUntilStart: secondsUntil
+                secondsUntilStart: event.startDate.timeIntervalSince(now)
             )
         }
         .sorted { $0.startDate < $1.startDate }
     }
 
-    func findNextEvent(config: Config) -> UpcomingEvent? {
+    public func findNextEvent(config: Config) -> UpcomingEvent? {
         let now = Date()
-        let endDate = now.addingTimeInterval(24 * 3600) // Look 24 hours ahead
+        let endDate = now.addingTimeInterval(24 * 3600)
 
         let predicate = store.predicateForEvents(withStart: now, end: endDate, calendars: filteredCalendars(config: config))
         let events = store.events(matching: predicate)
@@ -103,16 +98,12 @@ class CalendarService {
         return events.compactMap { event -> UpcomingEvent? in
             if config.skipAllDay && event.isAllDay { return nil }
             if event.status == .canceled { return nil }
-
             if config.skipDeclined {
                 if let attendees = event.attendees {
                     let selfAttendee = attendees.first { $0.isCurrentUser }
-                    if selfAttendee?.participantStatus == .declined {
-                        return nil
-                    }
+                    if selfAttendee?.participantStatus == .declined { return nil }
                 }
             }
-
             return UpcomingEvent(
                 id: event.eventIdentifier,
                 title: event.title ?? "Untitled",
@@ -126,7 +117,7 @@ class CalendarService {
     }
 
     private func filteredCalendars(config: Config) -> [EKCalendar]? {
-        guard !config.calendars.isEmpty else { return nil } // nil = all calendars
+        guard !config.calendars.isEmpty else { return nil }
         let allCalendars = store.calendars(for: .event)
         let filtered = allCalendars.filter { config.calendars.contains($0.title) }
         return filtered.isEmpty ? nil : filtered

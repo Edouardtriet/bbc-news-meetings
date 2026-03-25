@@ -9,18 +9,27 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),
     ],
     targets: [
-        .executableTarget(
-            name: "bbc-news-meetings",
-            dependencies: [
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
-            ],
-            path: "Sources/BBCNewsMeetings",
-            resources: [
-                .copy("Resources"),
-            ],
+        .target(
+            name: "BBCNewsMeetingsCore",
+            path: "Sources/Core",
             linkerSettings: [
                 .linkedFramework("EventKit"),
             ]
+        ),
+        .executableTarget(
+            name: "bbc-news-meetings",
+            dependencies: [
+                "BBCNewsMeetingsCore",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
+            path: "Sources/CLI"
+        ),
+        .executableTarget(
+            name: "bbc-news-meetings-menubar",
+            dependencies: [
+                "BBCNewsMeetingsCore",
+            ],
+            path: "Sources/MenuBar"
         ),
     ]
 )

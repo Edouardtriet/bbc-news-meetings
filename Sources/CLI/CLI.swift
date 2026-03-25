@@ -1,4 +1,5 @@
 import ArgumentParser
+import BBCNewsMeetingsCore
 import Darwin
 import Foundation
 
@@ -222,30 +223,22 @@ struct Setup: ParsableCommand {
             let configDir = Config.defaultConfigDir
             try FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
 
-            if let bundledURL = Bundle.module.url(forResource: "default-fanfare", withExtension: "mp3", subdirectory: "Resources") {
-                try FileManager.default.copyItem(at: bundledURL, to: Config.defaultAudioPath)
-                print("  Default fanfare copied to: \(audioPath)")
+            // Use a system sound as fallback
+            let systemSound = "/System/Library/Sounds/Hero.aiff"
+            if FileManager.default.fileExists(atPath: systemSound) {
+                try FileManager.default.copyItem(
+                    atPath: systemSound,
+                    toPath: audioPath
+                )
+                print("  Using system sound (Hero) as placeholder.")
             } else {
-                // Use a system sound as fallback
-                let systemSound = "/System/Library/Sounds/Hero.aiff"
-                if FileManager.default.fileExists(atPath: systemSound) {
-                    try FileManager.default.copyItem(
-                        atPath: systemSound,
-                        toPath: audioPath
-                    )
-                    print("  Using system sound (Hero) as placeholder.")
-                    print("")
-                    print("  To add your own music:")
-                    print("    1. Run: open \(configDir.path)")
-                    print("    2. Drag your audio file into the folder")
-                    print("    3. Rename it to theme.mp3")
-                } else {
-                    print("  No audio file found. To add music:")
-                    print("    1. Run: open \(configDir.path)")
-                    print("    2. Drag your audio file into the folder")
-                    print("    3. Rename it to theme.mp3")
-                }
+                print("  No audio file found.")
             }
+            print("")
+            print("  To add your own music:")
+            print("    1. Run: open \(configDir.path)")
+            print("    2. Drag your audio file into the folder")
+            print("    3. Rename it to theme.mp3")
         }
 
         // Step 4: LaunchAgent
@@ -429,8 +422,7 @@ struct Uninstall: ParsableCommand {
 
         print("")
         print("Done. The binary is still installed — remove it with:")
-        print("  brew uninstall bbc-news-meetings")
-        print("  # or: rm $(which bbc-news-meetings)")
+        print("  rm $(which bbc-news-meetings)")
     }
 }
 
@@ -495,9 +487,17 @@ func installLaunchAgent() throws {
     process.waitUntilExit()
 }
 
+func sanitizeForAppleScript(_ input: String) -> String {
+    input.replacingOccurrences(of: "\\", with: "\\\\")
+         .replacingOccurrences(of: "\"", with: "\\\"")
+}
+
 func showNotification(title: String, subtitle: String, calendarName: String) {
+    let safeTitle = sanitizeForAppleScript(title)
+    let safeSub = sanitizeForAppleScript(subtitle)
+    let safeCal = sanitizeForAppleScript(calendarName)
     let script = """
-    display notification "\(calendarName)" with title "🔴 \(title)" subtitle "\(subtitle)"
+    display notification "\(safeCal)" with title "🔴 \(safeTitle)" subtitle "\(safeSub)"
     """
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
