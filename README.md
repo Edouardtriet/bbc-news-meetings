@@ -36,7 +36,18 @@ The menu bar app shows a live countdown, plays the music, and has a "Stop Music"
 
 That's it. No background daemon, no Electron app, no network requests. Just a single compiled binary.
 
-It works with **every calendar on your Mac** — Google, iCloud, Outlook, Notion, or any account added in System Settings > Internet Accounts. No configuration needed.
+It works with **every calendar on your Mac** — Google, iCloud, Outlook, Notion Calendar, or any account added in System Settings > Internet Accounts. No configuration needed.
+
+### Multiple Google accounts
+
+If you use multiple Google accounts (personal + work), add each one:
+
+1. Open **System Settings > Internet Accounts**
+2. Click **Add Account > Google**
+3. Sign in and make sure **Calendars** is toggled ON
+4. Repeat for each account
+
+All calendars from all accounts will automatically show up. No changes needed in the tool — it reads every calendar on your Mac.
 
 ## Commands
 
